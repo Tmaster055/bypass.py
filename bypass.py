@@ -8,6 +8,23 @@ import subprocess
 import shutil
 
 
+def download_file(url: str, installer_path: str):
+    try:
+        response = requests.get(url, stream=True)
+        total_size = int(response.headers.get('content-length', 0))
+        block_size = 1024
+        t = tqdm(total=total_size, unit='B', unit_scale=True)
+        with open(installer_path, 'wb') as f:
+            for data in response.iter_content(block_size):
+                t.update(len(data))
+                f.write(data)
+        t.close()
+    except Exception as e:
+        print(f"Fehler beim Herunterladen: {e}")
+        if os.path.exists(installer_path):
+            os.remove(installer_path)
+        sys.exit(1)
+
 # Lädt automatisiert den "Tor Browser" herunter
 def download_tor():     
     url = 'https://www.torproject.org/de/download/' 
@@ -19,6 +36,7 @@ def download_tor():
     file_name = "tor-browser-windows-installer.exe"
     current_directory = os.getcwd()
     tor_folder = os.path.join(current_directory, "Tor-Browser")
+    tor_file = os.path.join(current_directory, file_name)
 
     if download_button:
         download_link = download_button.get('href')
@@ -26,13 +44,12 @@ def download_tor():
 
         base_url = 'https://www.torproject.org/'
         full_download_url = base_url + download_link
-        file_response = requests.get(full_download_url)
 
-        with open(file_name, 'wb') as f:
-            f.write(file_response.content)
-        print(f"Die Datei wurde als {file_name} gespeichert.")
+        print("Installiere Tor Setup...")
+        download_file(full_download_url, tor_file)
 
         try:
+            print("Starte die Installation vom Setup...")
             subprocess.run([file_name, '/S', f'/D={tor_folder}'], check=True)
             print(f"{file_name} wurde jetzt ohne Benutzerinteraktion installiert.")
         except subprocess.CalledProcessError as e:
@@ -40,8 +57,7 @@ def download_tor():
     else:
         print("Download-Button mit dem Text 'Herunterladen für Windows' nicht gefunden.")
 
-    tor = os.path.join(current_directory, file_name)
-    os.remove(tor)
+    os.remove(tor_file)
 
 # Lässt dich einen Command ausführen auch ohne die CMD
 def command_exec():
@@ -99,19 +115,8 @@ def get_dependencies_winget():
     
     zip_path = os.path.join(os.getcwd(), "Winget-Dependencies.zip")
 
-    try:
-        response = requests.get(zip_url, stream=True)
-        total_size = int(response.headers.get('content-length', 0))
-        block_size = 1024
-        t = tqdm(total=total_size, unit='B', unit_scale=True)
-        with open(zip_path, 'wb') as f:
-            for data in response.iter_content(block_size):
-                t.update(len(data))
-                f.write(data)
-        t.close()
-    except Exception as e:
-        print(f"Fehler beim Herunterladen: {e}")
-        sys.exit(1)
+    print("Lade die Dependencies herunter...")
+    download_file(zip_url, zip_path)
 
     extract_dir = os.path.splitext(zip_path)[0]
     
@@ -127,7 +132,8 @@ def get_dependencies_winget():
         file_paths = [os.path.join(x64_dir, file) for file in os.listdir(x64_dir)]
     else:
         file_paths = []
-    
+
+    print("Anwenden...")
     for package in file_paths:
         os.system(f"powershell Add-AppxPackage {package}")
     
@@ -135,7 +141,7 @@ def get_dependencies_winget():
         shutil.rmtree(extract_dir)
     
 
-# Installiert automatisiert am PC "Winget" (Wird noch implementiert) TODO
+# Installiert automatisiert am PC "Winget"
 def install_winget():
     try:
         subprocess.run(["winget", "--version"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -148,21 +154,7 @@ def install_winget():
     winget_url = "https://aka.ms/getwinget"
     installer_path = os.path.join(os.getcwd(), "Microsoft.DesktopAppInstaller.msixbundle")
     
-    try:
-        response = requests.get(winget_url, stream=True)
-        total_size = int(response.headers.get('content-length', 0))
-        block_size = 1024
-        t = tqdm(total=total_size, unit='B', unit_scale=True)
-        with open(installer_path, 'wb') as f:
-            for data in response.iter_content(block_size):
-                t.update(len(data))
-                f.write(data)
-        t.close()
-    except Exception as e:
-        print(f"Fehler beim Herunterladen: {e}")
-        if os.path.exists(installer_path):  
-            os.remove(installer_path)
-        sys.exit(1)
+    download_file(winget_url, installer_path)
     
     os.system(f"powershell Add-AppxPackage {installer_path}")
     print("Installation abgeschlossen. Bitte prüfen Sie, ob winget nun funktioniert.")
