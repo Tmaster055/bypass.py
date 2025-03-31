@@ -8,7 +8,6 @@ import subprocess
 import shutil
 
 
-
 # Lädt automatisiert den "Tor Browser" herunter
 def download_tor():     
     url = 'https://www.torproject.org/de/download/' 
@@ -17,23 +16,21 @@ def download_tor():
     soup = BeautifulSoup(response.text, 'html.parser')
     download_button = soup.find('a', class_='btn btn-primary mt-4 downloadLink', string="Herunterladen fÃ¼r Windows")
 
+    file_name = "tor-browser-windows-installer.exe"
+    current_directory = os.getcwd()
+    tor_folder = os.path.join(current_directory, "Tor-Browser")
+
     if download_button:
         download_link = download_button.get('href')
         print(f"Gefundener Download-Link: {download_link}")
 
         base_url = 'https://www.torproject.org/'
         full_download_url = base_url + download_link
-
-
         file_response = requests.get(full_download_url)
 
-        file_name = "tor-browser-windows-installer.exe"
         with open(file_name, 'wb') as f:
             f.write(file_response.content)
         print(f"Die Datei wurde als {file_name} gespeichert.")
-
-        current_directory = os.getcwd()
-        tor_folder = os.path.join(current_directory, "Tor-Browser")
 
         try:
             subprocess.run([file_name, '/S', f'/D={tor_folder}'], check=True)
@@ -62,7 +59,7 @@ def command_exec():
     
 # Benutzt statt die angegebenen Admin-Rechte deine eigenen User-Rechte
 def admin_bypass():
-    print("WARNUNG! Diese Methode benutzt nur die User-Rechte statt die Admin-Rechte! \nAlso könnte es gut sein dass die Datei Fehler aufweißt beim ausführen!")
+    print("WARNUNG! Diese Methode benutzt nur die User-Rechte statt die Admin-Rechte! \nAlso könnte es gut sein dass die Datei Fehler aufweist beim ausführen!")
     pfad_text = input("Gib den Pfad zur Datei an: ")
     command = f'set __COMPAT_LAYER=RUNASINVOKER && start "" "{pfad_text}"'
     subprocess.run(command, check=True, shell=True)
@@ -76,7 +73,7 @@ def kill_watch_process():
         if question == "y":
             break
         elif question == "n":
-            quit
+            quit()
             break
         else:
             print("Diese Eingabe ist nicht korrekt!")
@@ -84,11 +81,11 @@ def kill_watch_process():
     while True:
         os.system("taskkill /f /im notepad.exe >nul 2>&1")
 
-# Lädt die dependencies von winget herunter
+# Lädt die Dependencies von Winget herunter
 def get_dependencies_winget():
-    GITHUB_API_URL = "https://api.github.com/repos/microsoft/winget-cli/releases/latest"
+    winget_github = "https://api.github.com/repos/microsoft/winget-cli/releases/latest"
 
-    response = requests.get(GITHUB_API_URL)
+    response = requests.get(winget_github)
     release_data = response.json()
 
     zip_url = None
@@ -138,7 +135,7 @@ def get_dependencies_winget():
         shutil.rmtree(extract_dir)
     
 
-# Installiert automatisiert am PC "winget" (Wird noch implementiert) TODO 
+# Installiert automatisiert am PC "Winget" (Wird noch implementiert) TODO
 def install_winget():
     try:
         subprocess.run(["winget", "--version"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -173,7 +170,7 @@ def install_winget():
         os.remove(installer_path)
 
 # Der direkt ausführende Part 
-print("Wilkommen zu Tobis Ultimatives Bypass Tool!")
+print("Willkommen zu Tobis Ultimatives Bypass Tool!")
 while True:
     print("(1) Tor-Installation")
     print("(2) Command-Ausführer")
@@ -198,6 +195,3 @@ while True:
         break
     else:
         print("Diese Eingabe ist keine Nummer von oben!")
-
-
-
